@@ -1,0 +1,106 @@
+name: Autograding Tests
+
+on: [push, pull_request, workflow_dispatch, repository_dispatch]
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check grading helpers
+        run: python3 .tests/test_sql_helpers.py
+
+      - name: Prepare PostgreSQL
+        run: docker pull postgres:18
+
+      - name: Check SQL runtime
+        run: python3 .tests/test_sql_runtime.py
+
+      - name: "Библиотека: читатели из Москвы"
+        id: library_1
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Библиотека: читатели из Москвы"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_library_1
+          timeout: 2
+          max-score: 1
+
+      - name: "Библиотека: книги Ивана Иванова"
+        id: library_2
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Библиотека: книги Ивана Иванова"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_library_2
+          timeout: 2
+          max-score: 1
+
+      - name: "Библиотека: категории книг"
+        id: library_3
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Библиотека: категории книг"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_library_3
+          timeout: 2
+          max-score: 2
+
+      - name: "Библиотека: возвраты книг"
+        id: library_4
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Библиотека: возвраты книг"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_library_4
+          timeout: 2
+          max-score: 1
+
+      - name: "Библиотека: общие книги"
+        id: library_5
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Библиотека: общие книги"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_library_5
+          timeout: 2
+          max-score: 2
+
+      - name: "Поезда: прямые рейсы"
+        id: train_1
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Поезда: прямые рейсы"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_train_1
+          timeout: 2
+          max-score: 1
+
+      - name: "Поезда: маршруты с пересадкой"
+        id: train_2
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Поезда: маршруты с пересадкой"
+          command: python3 .tests/test_sql_answers.py SqlAnswersTests.test_train_2
+          timeout: 2
+          max-score: 2
+
+      - name: Report Results
+        if: always()
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          LIBRARY_1_RESULTS: ${{ steps.library_1.outputs.result }}
+          LIBRARY_2_RESULTS: ${{ steps.library_2.outputs.result }}
+          LIBRARY_3_RESULTS: ${{ steps.library_3.outputs.result }}
+          LIBRARY_4_RESULTS: ${{ steps.library_4.outputs.result }}
+          LIBRARY_5_RESULTS: ${{ steps.library_5.outputs.result }}
+          TRAIN_1_RESULTS: ${{ steps.train_1.outputs.result }}
+          TRAIN_2_RESULTS: ${{ steps.train_2.outputs.result }}
+        with:
+          runners: library_1,library_2,library_3,library_4,library_5,train_1,train_2

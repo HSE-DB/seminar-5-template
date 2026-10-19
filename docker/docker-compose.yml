@@ -1,6 +1,6 @@
 services:
     library:
-        image: postgres:17
+        image: postgres:18
         ports:
             - "5444:5432"
         environment:
@@ -8,9 +8,14 @@ services:
             POSTGRES_PASSWORD: library
             POSTGRES_DB: library
         volumes:
-            - ./sql/library/init.sql:/docker-entrypoint-initdb.d/init.sql
+            - ./sql/library/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U library -d library"]
+            interval: 2s
+            timeout: 3s
+            retries: 30
     train:
-        image: postgres:17
+        image: postgres:18
         ports:
             - "5445:5432"
         environment:
@@ -18,4 +23,9 @@ services:
             POSTGRES_PASSWORD: train
             POSTGRES_DB: train
         volumes:
-            - ./sql/train/init.sql:/docker-entrypoint-initdb.d/init.sql
+            - ./sql/train/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U train -d train"]
+            interval: 2s
+            timeout: 3s
+            retries: 30
